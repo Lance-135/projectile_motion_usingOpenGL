@@ -1,6 +1,55 @@
+import time
 import glfw
 from OpenGL.GL import *
 import math
+
+
+def calculatePoints(v_x, v_y, g, dt, point, restitution):
+    while True:
+        point[0] += v_x * dt
+        point[1] += v_y * dt
+        v_y -= g * dt
+
+        # Check for ground collision
+        if point[1] <= 10:  # Ground level
+            point[1] = 10  # Reset to ground level
+            v_y = -v_y * restitution  # Reverse velocity with damping
+            if abs(v_y) < 1:  # Stop bouncing when energy is negligible
+                break
+
+        yield point, v_y
+
+
+def draw_circle(point, r, num_segments, color):
+    glColor3f(*color)  # Set the color
+    glBegin(GL_TRIANGLE_FAN)
+    glVertex2f(point[0], point[1])  # Center of the circle
+    for i in range(num_segments + 1):
+        theta = 2.0 * math.pi * i / num_segments  # Angle in radians
+        x = r * math.cos(theta)  # X coordinate
+        y = r * math.sin(theta)  # Y coordinate
+        glVertex2f(x + point[0], y + point[1])
+    glEnd()
+
+
+def draw_ground(width, height):
+    # Draw a shaded ground rectangle
+    glColor3f(0.3, 0.8, 0.3)  # Green for ground
+    glBegin(GL_QUADS)
+    glVertex2f(0, 0)
+    glVertex2f(width, 0)
+    glVertex2f(width, 20)
+    glVertex2f(0, 20)
+    glEnd()
+
+
+def draw_trail(trail):
+    glColor3f(0.5, 0.5, 1.0)  # Light blue for the trail
+    glBegin(GL_LINE_STRIP)
+    for point in trail:
+        glVertex2f(point[0], point[1])
+    glEnd()
+
 
 def init_window(width, height, title):
     if not glfw.init():
@@ -23,66 +72,57 @@ def init_window(width, height, title):
 
     return window
 
-def draw_projectile(x, y):
-    glColor3f(1.0, 0.0, 0.0)  # Red color
-    glBegin(GL_QUADS)
-    glVertex2f(x - 5, y - 5)
-    glVertex2f(x + 5, y - 5)
-    glVertex2f(x + 5, y + 5)
-    glVertex2f(x - 5, y + 5)
-    glEnd()
-
-def simulate_projectile_motion(v, angle, g, dt):
-    angle_rad = math.radians(angle)
-    vx = v * math.cos(angle_rad)  # Horizontal velocity
-    vy = v * math.sin(angle_rad)  # Vertical velocity
-
-    x, y = 0, 0  # Initial position
-
-    while y >= 0:
-        yield x, y
-        x += vx * dt
-        vy -= g * dt
-        y += vy * dt
 
 def main():
     # Window dimensions
-    window_width, window_height = 800, 600
+    window_width, window_height = 900, 800
+    center = [10, 10]  # Initial position of the projectile
 
-    # Constants for simulation
-    initial_velocity = 50.0  # m/s
-    launch_angle = 45.0  # degrees
+    initial_velocity = 100
+    angle = 65  # Launch angle in degrees
+    rad_angle = math.radians(angle)
+    g = 9.81
+    dt = 0.01
+    restitution = 0.7  # Energy retention coefficient (bounciness)
 
-    # Initialize GLFW window
-    window = init_window(window_width, window_height, "Projectile Motion Simulation")
+    v_x = initial_velocity * math.cos(rad_angle)
+    v_y = initial_velocity * math.sin(rad_angle)
+    points_generator = calculatePoints(v_x, v_y, g, dt, center, restitution)
+    window = init_window(window_width, window_height, "Bouncing Projectile Simulation")
 
-    # Simulation parameters
-    g = 9.8  # Gravitational acceleration (m/s^2)
-    dt = 0.01  # Time step
+    trail = []  # To store the projectile's trail
 
-    # Scale factor to fit the simulation in the window
-    scale_x = window_width / 100.0  # Assume max horizontal distance is 100m
-    scale_y = window_height / 50.0  # Assume max vertical height is 50m
-
-    # Create a generator for projectile motion
-    projectile_motion = simulate_projectile_motion(initial_velocity, launch_angle, g, dt)
-
-    # Main rendering loop
     while not glfw.window_should_close(window):
         glClear(GL_COLOR_BUFFER_BIT)
         glLoadIdentity()
 
+        # Draw ground
+        draw_ground(window_width, window_height)
+
         try:
-            x, y = next(projectile_motion)
-            draw_projectile(x * scale_x, y * scale_y)
+            # Get the next point in the projectile motion
+            point, v_y = next(points_generator)
+            trail.append(list(point))  # Add the current point to the trail
+
+            # Limit the trail length for performance
+            if len(trail) > 500:
+                trail.pop(0)
+
+            # Draw the trail
+            draw_trail(trail)
+
+            # Draw the projectile
+            color = (1.0 - point[1] / window_height, 0.2, point[1] / window_height)  # Dynamic color
+            draw_circle(point, 8, 20, color)
         except StopIteration:
-            # Stop simulation when the projectile hits the ground
-            pass
+            break
 
         glfw.swap_buffers(window)
         glfw.poll_events()
+        time.sleep(0.01)
 
     glfw.terminate()
+
 
 if __name__ == "__main__":
     main()

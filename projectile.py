@@ -4,21 +4,28 @@ from OpenGL.GL import *
 import math
 
 
-def calculatePoints(v_x, v_y, g, dt, x,y):
+def calculatePoints(v_x, v_y, g, dt, point):
     
-    while y>=0: 
-        x += v_x * dt
-        y += v_y * dt
+    while point[1]>=0: 
+        point[0] += v_x * dt
+        point[1] += v_y * dt
         v_y = v_y - g*dt
-        print(v_y)
-        yield x, y
+        yield point
 
 
-def simulateProjectileMotion(x, y):
-    glBegin(GL_POINTS)
-    glVertex2f(x, y)
+
+def simulateProjectileMotion(point):
+    # For points
+    num_segments = 10
+    r = 5
+    glBegin(GL_TRIANGLE_FAN)
+    glVertex2f(point[0], point[1])  # Center of the circle
+    for i in range(num_segments + 1):
+        theta = 2.0 * math.pi * i / num_segments  # Angle in radians
+        x = r * math.cos(theta)  # X coordinate
+        y = r * math.sin(theta)  # Y coordinate
+        glVertex2f(x + point[0], y + point[1])
     glEnd()
-    # now display these points
     
 def init_window(width, height, title):
     if not glfw.init():
@@ -44,28 +51,27 @@ def init_window(width, height, title):
 
 def main():
     # Window dimensions
-    window_width, window_height = 800, 600
+    window_width, window_height = 900, 800
     x, y = 0, 0
-    vertices = [(0,5), (5,0), (5,5)] # for a triangular object 
+    center = [10, 10]
     
     initial_velocity = 100
-    angle = 50 
+    angle = 90 
     rad_angle = math.radians(angle)
     g = 9.81
     dt = 0.01
     v_x = initial_velocity*math.cos(rad_angle)
     v_y = initial_velocity*math.sin(rad_angle)
-
-    points_generator = calculatePoints(v_x, v_y, g, dt, vertices)
-    # Initialize GLFW window
+    points_generator = calculatePoints(v_x, v_y, g, dt, center)
     window = init_window(window_width, window_height, "Projectile Motion Simulation")
 
     while not glfw.window_should_close(window):
         glClear(GL_COLOR_BUFFER_BIT)
         glLoadIdentity()
         try: 
-            x, y = next(points_generator)
-            simulateProjectileMotion(x, y)
+            # For point
+            point = next(points_generator)
+            simulateProjectileMotion(point)
         except StopIteration:
             break
         glfw.swap_buffers(window)
