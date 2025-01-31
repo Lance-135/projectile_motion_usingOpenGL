@@ -5,6 +5,7 @@ from start_function import draw_start_screen, handle_start_screen_click
 from exit_function import exit_program
 from Projectile import main as projectile_simulation  # Import Projectile.py's main function
 from utils import init_window
+from MIprojectile import main as mi_projectile
 
 # Window settings
 window_width, window_height = 900, 800
@@ -19,7 +20,8 @@ def mouse_button_callback(window, button, action, mods):
         current_state = handle_start_screen_click(xpos, ypos, window, current_state)
         if current_state == "simulation":
             glfw.destroy_window(window)  # Close menu window before opening simulation
-            projectile_simulation()  # Start the projectile simulation
+            # projectile_simulation()  # Start the projectile simulation
+            mi_projectile()
 
 def main():
     global current_state

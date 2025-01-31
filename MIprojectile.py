@@ -2,11 +2,18 @@ import time
 import glfw
 from OpenGL.GL import *
 import math
+from advProjectile import draw_ground, draw_trail
+import pygame
+
+
+# Initializing pygame mixer 
+pygame.mixer.init()
+bounce_sound = pygame.mixer.Sound("bounce.wav") # the bounce sound effect file
 
 # Globals for mouse interaction
 mouse_pressed = False
 start_point = [50, 50]  # Starting point of the projectile
-end_point = [50, 50]  # Dragging point
+end_point = [50, 50]  # Dragging point or  initial dragging point which determines the angle and velocity
 launch_projectile = False
 
 # For tracking the projectile
@@ -17,11 +24,21 @@ projectile_active = False
 window_width, window_height = 900, 800
 
 
-def calculate_points(v_x, v_y, g, dt, point):
+def calculate_points(v_x, v_y, g, dt, point, restitution, trail):
     while point[1] >= 0:
         point[0] += v_x * dt
         point[1] += v_y * dt
         v_y -= g * dt
+        if point[1] <= 10:  # Ground level
+            point[1] = 10  # Reset to ground level
+            bounce_sound.play()
+            v_y = -v_y * restitution[1]
+            v_x = v_x* restitution[0]   # Reverse velocity with damping
+            if abs(v_y) < 10  and abs(v_x)< 1:  # Stop bouncing when energy is negligible
+                trail.clear()
+                break
+        if point[0]>1000 or point[1] > 1000: 
+            break
         yield point
 
 
@@ -81,9 +98,10 @@ def cursor_position_callback(window, xpos, ypos):
 
 def main():
     global launch_projectile, projectile_generator, projectile_active, start_point, end_point
-
+    mouse_pressed = False
     g = 9.81  # Gravity
     dt = 0.01  # Time step
+    trail = [] # list to store the points in trail
 
     window = init_window(window_width, window_height, "Projectile Motion Simulation")
     glfw.set_mouse_button_callback(window, mouse_button_callback)
@@ -92,6 +110,8 @@ def main():
     while not glfw.window_should_close(window):
         glClear(GL_COLOR_BUFFER_BIT)
         glLoadIdentity()
+        draw_ground(window_width, window_height)
+        draw_trail(trail)
 
         # Draw the dragging line and static projectile
         if mouse_pressed or not projectile_active:
@@ -109,11 +129,15 @@ def main():
         if launch_projectile and not projectile_active:
             dx = end_point[0] - start_point[0]
             dy = end_point[1] - start_point[1]
-            velocity = math.sqrt(dx**2 + dy**2) * 0.2  # Scale velocity
+            # dx = start_point[0] - end_point[0]   # for back pull
+            # dy = start_point[1] - end_point[1]
+            velocity = math.sqrt(dx**2 + dy**2) * 0.4  # Scale velocity
             angle = math.atan2(dy, dx)
             v_x = velocity * math.cos(angle)
             v_y = velocity * math.sin(angle)
-            projectile_generator = calculate_points(v_x, v_y, g, dt, start_point[:])
+            # basically the fraction of initial velocity remaining after each bounce 
+            restitution = (0.3, 0.7)
+            projectile_generator = calculate_points(v_x, v_y, g, dt, start_point[:], restitution, trail)
             projectile_active = True
             launch_projectile = False
 
@@ -121,14 +145,17 @@ def main():
         if projectile_active:
             try:
                 point = next(projectile_generator)
-                glColor3f(0, 1, 0)  # Green color for the projectile
+                trail.append(list(point)) # adding the point to the trail
+                if len(trail) >500:  # so limiting the length of trail 
+                    trail.pop(0) 
+                glColor3f(1, 0.25, 0.45)  # Green color for the projectile
                 simulate_projectile_motion(point)
             except StopIteration:
                 projectile_active = False  # Reset when the projectile hits the ground
 
         glfw.swap_buffers(window)
         glfw.poll_events()
-        time.sleep(0.01)
+        time.sleep(0.001)
 
     glfw.terminate()
 
