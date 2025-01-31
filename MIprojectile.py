@@ -35,9 +35,10 @@ def calculate_points(v_x, v_y, g, dt, point, restitution, trail):
             v_y = -v_y * restitution[1]
             v_x = v_x* restitution[0]   # Reverse velocity with damping
             if abs(v_y) < 10  and abs(v_x)< 1:  # Stop bouncing when energy is negligible
-                trail.clear()
+                trail.clear() # Deleting the trail after the position of the projectile is reset to initial point
                 break
-        if point[0]>1000 or point[1] > 1000: 
+        if point[0]>1000 or point[1] > 1500: 
+            trail.clear()
             break
         yield point
 
@@ -110,7 +111,7 @@ def main():
     while not glfw.window_should_close(window):
         glClear(GL_COLOR_BUFFER_BIT)
         glLoadIdentity()
-        draw_ground(window_width, window_height)
+        draw_ground(window_width, window_height) # function to draw ground
         draw_trail(trail)
 
         # Draw the dragging line and static projectile
