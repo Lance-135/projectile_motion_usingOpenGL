@@ -1,6 +1,5 @@
 import math
 
-from projectile import calculatePoints
 
 
 x0 = 0

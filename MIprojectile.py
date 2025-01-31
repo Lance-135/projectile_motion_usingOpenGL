@@ -14,6 +14,7 @@ bounce_sound = pygame.mixer.Sound("bounce.wav") # the bounce sound effect file
 mouse_pressed = False
 start_point = [50, 50]  # Starting point of the projectile
 end_point = [50, 50]  # Dragging point or  initial dragging point which determines the angle and velocity
+trail = [] # list to store the points in trail
 launch_projectile = False
 
 # For tracking the projectile
@@ -37,7 +38,7 @@ def calculate_points(v_x, v_y, g, dt, point, restitution, trail):
             if abs(v_y) < 10  and abs(v_x)< 1:  # Stop bouncing when energy is negligible
                 trail.clear() # Deleting the trail after the position of the projectile is reset to initial point
                 break
-        if point[0]>1000 or point[1] > 1500: 
+        if point[0]>1000 or point[0]<-40 or point[1] > 1500: 
             trail.clear()
             break
         yield point
@@ -79,7 +80,7 @@ def init_window(width, height, title):
 
 
 def mouse_button_callback(window, button, action, mods):
-    global mouse_pressed, start_point, end_point, launch_projectile, projectile_active
+    global mouse_pressed, start_point, end_point, launch_projectile, projectile_active, trail
 
     if button == glfw.MOUSE_BUTTON_LEFT:
         if action == glfw.PRESS:
@@ -89,7 +90,9 @@ def mouse_button_callback(window, button, action, mods):
             mouse_pressed = False
             if not projectile_active:  # Only launch if no projectile is active
                 launch_projectile = True
-
+    if button == glfw.MOUSE_BUTTON_RIGHT:  # reset the projectile 
+        trail.clear()
+        projectile_active = False
 
 def cursor_position_callback(window, xpos, ypos):
     global end_point
@@ -98,11 +101,11 @@ def cursor_position_callback(window, xpos, ypos):
 
 
 def main():
-    global launch_projectile, projectile_generator, projectile_active, start_point, end_point
-    mouse_pressed = False
+    time.sleep(1)
+    global launch_projectile, projectile_generator, projectile_active, start_point, end_point, trail
     g = 9.81  # Gravity
     dt = 0.01  # Time step
-    trail = [] # list to store the points in trail
+    
 
     window = init_window(window_width, window_height, "Projectile Motion Simulation")
     glfw.set_mouse_button_callback(window, mouse_button_callback)
@@ -137,7 +140,7 @@ def main():
             v_x = velocity * math.cos(angle)
             v_y = velocity * math.sin(angle)
             # basically the fraction of initial velocity remaining after each bounce 
-            restitution = (0.3, 0.7)
+            restitution = (0.4, 0.7)
             projectile_generator = calculate_points(v_x, v_y, g, dt, start_point[:], restitution, trail)
             projectile_active = True
             launch_projectile = False
