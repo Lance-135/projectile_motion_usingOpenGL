@@ -45,7 +45,7 @@ def draw_start_screen():
     glVertex2f(mi_projectile_button[2], mi_projectile_button[3])
     glVertex2f(mi_projectile_button[0], mi_projectile_button[3])
     glEnd()
-    render_text("MI_project", 400, 415, (51, 204, 51))
+    render_text("MI_projectile", 400, 415, (51, 204, 51))
     
     # Draw Exit button
     glColor3f(0.8, 0.2, 0.2)  # Red

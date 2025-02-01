@@ -93,6 +93,7 @@ def mouse_button_callback(window, button, action, mods):
     if button == glfw.MOUSE_BUTTON_RIGHT:  # reset the projectile 
         trail.clear()
         projectile_active = False
+       
 
 def cursor_position_callback(window, xpos, ypos):
     global end_point
@@ -136,7 +137,7 @@ def main():
             # dx = start_point[0] - end_point[0]   # for back pull
             # dy = start_point[1] - end_point[1]
             velocity = math.sqrt(dx**2 + dy**2) * 0.4  # Scale velocity
-            angle = math.atan2(dy, dx)
+            angle = math.atan2(dy, dx)  
             v_x = velocity * math.cos(angle)
             v_y = velocity * math.sin(angle)
             # basically the fraction of initial velocity remaining after each bounce 

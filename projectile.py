@@ -19,7 +19,7 @@ launch_ready = False  # Start simulation only when inputs are complete
 pygame.init()
 pygame.mixer.init()
 try:
-    bounce_sound = pygame.mixer.Sound(r"bounce.wav")  # Load bouncing sound effect
+    bounce_sound = pygame.mixer.Sound("bounce.wav")  # Load bouncing sound effect
     print("Sound loaded successfully.")
 except pygame.error as e:
     print(f"Error loading sound: {e}")
