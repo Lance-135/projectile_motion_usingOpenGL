@@ -18,11 +18,13 @@ def mouse_button_callback(window, button, action, mods):
     
     if current_state == "start":
         current_state = handle_start_screen_click(xpos, ypos, window, current_state)
-        if current_state == "simulation":
+        if current_state == "projectile":
             glfw.destroy_window(window)  # Close menu window before opening simulation
-            # projectile_simulation()  # Start the projectile simulation
+            projectile_simulation()  # Start the projectile simulation
+            # mi_projectile()
+        if current_state == "mi_projectile":
+            glfw.destroy_window(window)
             mi_projectile()
-
 def main():
     global current_state
 
